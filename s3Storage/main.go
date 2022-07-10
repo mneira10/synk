@@ -2,7 +2,6 @@ package s3Storage
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -64,8 +63,10 @@ func (s3Obj *S3Object) ListFiles() {
 
 	// This should work for up to 1k objects:
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#S3.ListObjectsV2
+	// TODO: get all objects here
 	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket: &bucketName,
+		Bucket:  &bucketName,
+		MaxKeys: 1000,
 	})
 
 	if err != nil {
@@ -73,7 +74,8 @@ func (s3Obj *S3Object) ListFiles() {
 	}
 
 	for _, object := range listObjectsOutput.Contents {
-		obj, _ := json.MarshalIndent(object, "", "\t")
-		fmt.Println(string(obj))
+		// obj, _ := json.MarshalIndent(object, "", "\t")
+		// fmt.Println(string(obj))
+		fmt.Printf("Name: %v\n", *object.Key)
 	}
 }
