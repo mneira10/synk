@@ -6,10 +6,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// This is basically a workaround to have a global logging object in all
+// packages. I don't like it but it works. Inspired by:
+// https://stackoverflow.com/a/30261304/10296312
+
 var logger = &logrus.Logger{
 	Out:       os.Stderr,
-	Formatter: &logrus.TextFormatter{TimestampFormat: "2006-01-02 15:04:05.00000", FullTimestamp: true},
+	Formatter: &logrus.TextFormatter{TimestampFormat: "15:04:05.00000", FullTimestamp: true},
 	Level:     logrus.DebugLevel,
+}
+
+type Fields map[string]interface{}
+
+func WithFields(fields map[string]interface{}) *logrus.Entry {
+	return logger.WithFields(fields)
+}
+
+func SetLogLevel(level logrus.Level) {
+	logger.SetLevel(level)
 }
 
 func Info(args ...interface{}) {

@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	log "github.com/mneira10/synk/logger"
 )
 
 type S3Object struct {
@@ -24,7 +24,7 @@ type S3Storage interface {
 }
 
 func ConfigS3() *S3Object {
-	fmt.Println("Configuring S3...")
+	log.Info("Configuring S3...")
 
 	// temp hack while I implement a config file somewhere
 	accountId := os.Getenv("CLOUDFLARE_R2_ACCOUNT_ID")
@@ -43,15 +43,15 @@ func ConfigS3() *S3Object {
 	)
 
 	if err != nil {
-		log.Printf("error: %v", err)
+		log.Error(fmt.Printf("error: %v", err))
 		return nil
 	}
-
-	fmt.Println("Returning configuration...")
 
 	s3Obj := S3Object{
 		client: s3.NewFromConfig(cfg),
 	}
+
+	log.Info("Successfully configured s3.")
 	return &s3Obj
 }
 
@@ -59,6 +59,8 @@ func (s3Obj *S3Object) ListFiles() {
 
 	// TODO: generalize this
 	bucketName := "test-synk"
+
+	log.WithFields(log.Fields{"bucketName": bucketName}).Info("Listing objects")
 
 	// This should work for up to 1k objects:
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#S3.ListObjectsV2

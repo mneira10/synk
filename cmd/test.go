@@ -5,9 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	log "github.com/mneira10/synk/logger"
+
 	"github.com/mneira10/synk/s3Storage"
 	"github.com/spf13/cobra"
 )
@@ -18,18 +17,15 @@ var testCmd = &cobra.Command{
 	Short: "Test stuff",
 	Long:  `Test some devy stuff. Not doing the realsies thing.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("test called!!!")
+		log.Debug("Running test command.")
 
 		s3Client := s3Storage.ConfigS3()
 		s3Client.ListFiles()
-		// s3Wrapper.ListFiles(s3Client)
 	},
 }
 
 func init() {
-	log.Info("Adding command")
 	rootCmd.AddCommand(testCmd)
-	log.Warn("Command added")
 
 	// Here you will define your flags and configuration settings.
 
