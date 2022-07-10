@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 
+	log "github.com/mneira10/synk/logger"
 	"github.com/mneira10/synk/s3Storage"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,9 @@ var testCmd = &cobra.Command{
 }
 
 func init() {
+	log.Info("Adding command")
 	rootCmd.AddCommand(testCmd)
+	log.Warn("Command added")
 
 	// Here you will define your flags and configuration settings.
 
