@@ -7,8 +7,10 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/s3Storage"
 
 	"os"
 
@@ -27,12 +29,47 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("diff called")
+
+		s3Client := s3Storage.ConfigS3()
 		// TODO: get this from global configuration
 		localFiles := getFilesInLocalPath("./testData")
-		for _, localFile := range localFiles {
-			fmt.Println("Local file: ", localFile)
+		bucketFiles := getFilesInBucket(s3Client)
+
+		diffFiles := getDiffFiles(&localFiles, &bucketFiles)
+
+		fmt.Println("Diff:")
+		for _, file := range diffFiles {
+			fmt.Println(file)
 		}
+
 	},
+}
+
+func getDiffFiles(localFiles *[]string, bucketFiles *[]string) []string {
+	var diffFiles []string
+	sort.Strings(*bucketFiles)
+
+	for _, localFile := range *localFiles {
+		// Binary search the sorted bucket files
+		i := sort.SearchStrings(*bucketFiles, localFile)
+		isLocalFileInBucket := i < len(*bucketFiles) && (*bucketFiles)[i] == localFile
+
+		if !isLocalFileInBucket {
+			diffFiles = append(diffFiles, localFile)
+		}
+	}
+	return diffFiles
+
+}
+
+func getFilesInBucket(s3Client s3Storage.S3Storage) []string {
+	var bucketFiles []string
+	listObjectsData := s3Client.ListObjects()
+	objects := listObjectsData.Contents
+	for _, object := range objects {
+		bucketFiles = append(bucketFiles, *object.Key)
+	}
+	return bucketFiles
 }
 
 func getFilesInLocalPath(path string) []string {
