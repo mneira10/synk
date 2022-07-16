@@ -6,6 +6,11 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
+
+	log "github.com/mneira10/synk/logger"
+
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -22,7 +27,33 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("diff called")
+		// TODO: get this from global configuration
+		localFiles := getFilesInLocalPath("./testData")
+		for _, localFile := range localFiles {
+			fmt.Println("Local file: ", localFile)
+		}
 	},
+}
+
+func getFilesInLocalPath(path string) []string {
+	var localFiles []string
+	err := filepath.Walk(path,
+		func(filePath string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			// fmt.Println(path, info.Size())
+			if path != filePath {
+				localFiles = append(localFiles, filePath)
+			}
+			return nil
+		})
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	return localFiles
 }
 
 func init() {
