@@ -21,18 +21,25 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Info("Listing files in bucket:")
 		s3Client := s3Storage.ConfigS3()
-		listObjectsData := s3Client.ListObjects()
-		objects := listObjectsData.Contents
-
-		sort.Sort(s3Storage.ByFileName(objects))
 
 		fmt.Println("Bucket:", s3Client.BucketName)
 		fmt.Println("Url:", s3Client.Url)
 
-		for _, object := range objects {
-			fmt.Printf("%v\n", *object.Key)
-		}
+		printBucketFiles(s3Client)
+
 	},
+}
+
+func printBucketFiles(s3Client s3Storage.S3Storage) {
+	listObjectsData := s3Client.ListObjects()
+	objects := listObjectsData.Contents
+
+	sort.Sort(s3Storage.ByFileName(objects))
+
+	for _, object := range objects {
+		fmt.Printf("%v\n", *object.Key)
+	}
+
 }
 
 func init() {

@@ -19,11 +19,12 @@ type S3Object struct {
 }
 
 type S3Storage interface {
-	ListItems()
-	UploadFile(bucketPath string)
-	DownloadFile(bucketPath string)
+	ListObjects() *s3.ListObjectsV2Output
+	// UploadFile(bucketPath string)
+	// DownloadFile(bucketPath string)
 }
 
+// TODO: generalize this configuration to any S3 source
 func ConfigS3() *S3Object {
 	log.Info("Configuring S3...")
 
