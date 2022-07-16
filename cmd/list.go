@@ -26,8 +26,11 @@ var listCmd = &cobra.Command{
 
 		sort.Sort(s3Storage.ByFileName(objects))
 
+		fmt.Println("Bucket:", s3Client.BucketName)
+		fmt.Println("Url:", s3Client.Url)
+
 		for _, object := range objects {
-			fmt.Printf("Something %v\n", *object.Key)
+			fmt.Printf("%v\n", *object.Key)
 		}
 	},
 }

@@ -14,8 +14,8 @@ import (
 
 type S3Object struct {
 	client     *s3.Client
-	bucketName string
-	url        string
+	BucketName string
+	Url        string
 }
 
 type S3Storage interface {
@@ -50,7 +50,8 @@ func ConfigS3() *S3Object {
 
 	s3Obj := S3Object{
 		client:     s3.NewFromConfig(cfg),
-		bucketName: "test-synk",
+		BucketName: "test-synk",
+		Url:        fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId),
 	}
 
 	log.Info("Successfully configured s3.")
@@ -59,13 +60,13 @@ func ConfigS3() *S3Object {
 
 func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
 
-	log.WithFields(log.Fields{"bucketName": s3Obj.bucketName}).Info("Listing objects")
+	log.WithFields(log.Fields{"bucketName": s3Obj.BucketName}).Info("Listing objects")
 
 	// This should work for up to 1k objects:
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#S3.ListObjectsV2
 	// TODO: get all objects here
 	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket:  &s3Obj.bucketName,
+		Bucket:  &s3Obj.BucketName,
 		MaxKeys: 1000,
 	})
 
