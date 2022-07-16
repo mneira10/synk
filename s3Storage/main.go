@@ -13,7 +13,9 @@ import (
 )
 
 type S3Object struct {
-	client *s3.Client
+	client     *s3.Client
+	bucketName string
+	url        string
 }
 
 type S3Storage interface {
@@ -47,35 +49,37 @@ func ConfigS3() *S3Object {
 	}
 
 	s3Obj := S3Object{
-		client: s3.NewFromConfig(cfg),
+		client:     s3.NewFromConfig(cfg),
+		bucketName: "test-synk",
 	}
 
 	log.Info("Successfully configured s3.")
 	return &s3Obj
 }
 
-func (s3Obj *S3Object) ListFiles() {
+func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
 
-	// TODO: generalize this
-	bucketName := "test-synk"
-
-	log.WithFields(log.Fields{"bucketName": bucketName}).Info("Listing objects")
+	log.WithFields(log.Fields{"bucketName": s3Obj.bucketName}).Info("Listing objects")
 
 	// This should work for up to 1k objects:
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#S3.ListObjectsV2
 	// TODO: get all objects here
 	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket:  &bucketName,
+		Bucket:  &s3Obj.bucketName,
 		MaxKeys: 1000,
 	})
 
 	if err != nil {
 		log.Fatal(err)
+		log.Fatal("Could not list files in bucket")
+		os.Exit(1)
 	}
 
-	for _, object := range listObjectsOutput.Contents {
-		// obj, _ := json.MarshalIndent(object, "", "\t")
-		// fmt.Println(string(obj))
-		fmt.Printf("Name: %v\n", *object.Key)
-	}
+	return listObjectsOutput
+
+	// for _, object := range listObjectsOutput.Contents {
+	// 	// obj, _ := json.MarshalIndent(object, "", "\t")
+	// 	// fmt.Println(string(obj))
+	// 	fmt.Printf("Name: %v\n", *object.Key)
+	// }
 }

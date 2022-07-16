@@ -7,7 +7,6 @@ package cmd
 import (
 	log "github.com/mneira10/synk/logger"
 
-	"github.com/mneira10/synk/s3Storage"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +18,8 @@ var testCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Debug("Running test command.")
 
-		s3Client := s3Storage.ConfigS3()
-		s3Client.ListFiles()
+		// s3Client := s3Storage.ConfigS3()
+		// s3Client.ListFiles()
 	},
 }
 
