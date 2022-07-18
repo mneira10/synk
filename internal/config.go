@@ -1,4 +1,4 @@
-package synk
+package internal
 
 import (
 	"fmt"

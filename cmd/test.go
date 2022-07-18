@@ -7,8 +7,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
-	"github.com/mneira10/synk/synk"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ var testCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Debug("Running test command.")
 
-		config := synk.GetConfiguration(cfgFile)
+		config := internal.GetConfiguration(cfgFile)
 
 		fmt.Println(config.BucketName)
 
