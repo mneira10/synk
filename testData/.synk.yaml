@@ -1,0 +1,6 @@
+type: R2
+bucketName: mock-bucket-name
+url: https://www.some-url.com
+accountID: some value
+accessKeyId: some value
+accessKeySecret: some value

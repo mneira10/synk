@@ -5,7 +5,10 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"fmt"
+
 	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/synk"
 
 	"github.com/spf13/cobra"
 )
@@ -17,6 +20,10 @@ var testCmd = &cobra.Command{
 	Long:  `Test some devy stuff. Not doing the realsies thing.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Debug("Running test command.")
+
+		config := synk.GetConfiguration(cfgFile)
+
+		fmt.Println(config.BucketName)
 
 		// s3Client := s3Storage.ConfigS3()
 		// s3Client.ListFiles()
