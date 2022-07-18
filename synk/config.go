@@ -12,7 +12,7 @@ import (
 
 // Currently only supports Cloudflare's R2
 type R2ConfigData struct {
-	Type            string `validate:"required"`
+	Type            string `validate:"required,oneof='R2'"`
 	BucketName      string `validate:"required"`
 	Url             string `validate:"required"`
 	AccountId       string `validate:"required"`
@@ -50,6 +50,7 @@ func GetConfiguration(path string) R2ConfigData {
 
 	validate := validator.New()
 	if err := validate.Struct(&config); err != nil {
+		fmt.Println("Invalid .synk.yaml configuration file")
 		log.WithFields(log.Fields{"validateErrMsg": err}).Fatal("Missing required yaml attributes")
 		os.Exit(1)
 	}
