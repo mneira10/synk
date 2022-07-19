@@ -59,49 +59,37 @@ func formatAndPrintObjects(objects *[]types.Object) {
 	fileList := list.NewWriter()
 	fileList.SetStyle(list.StyleConnectedBold)
 
-	var fileNameStack []string
+	files := &File{Name: "root",
+		IsFolder: true, Children: make(map[string]*File)}
+
+	// var fileNameStack []string
 
 	for _, object := range *objects {
 		fileName := object.Key
 
 		split := strings.Split(*fileName, "/")
 
+		parentFolder := files
+
 		for i, part := range split {
-
-			if i != len(split)-1 {
-
-				if len(fileNameStack) <= i {
-					fileList.AppendItem(part)
-					fileList.Indent()
-
-					fileNameStack = append(fileNameStack, part)
-				} else if fileNameStack[i] != part {
-
-					fileNameStack = split[:i]
-					for j := 0; j < len(split)-i; j++ {
-						fileList.UnIndent()
-					}
-
-					fileList.AppendItem(part)
-					fileList.Indent()
-					fileNameStack = append(fileNameStack, part)
-				}
-
-				continue
+			isFolder := i != len(split)-1
+			currentFile := &File{
+				Name:     part,
+				IsFolder: isFolder,
+				Children: make(map[string]*File),
 			}
 
-			if len(split) == 1 {
-				for j := 0; j < len(fileNameStack); j++ {
-					fileList.UnIndent()
-				}
-				fileNameStack = []string{}
+			addFile(parentFolder, currentFile)
+
+			if isFolder {
+				parentFolder = parentFolder.Children[currentFile.Name]
 			}
 
-			fileList.AppendItem(part)
 		}
+
 	}
 
-	fileList.Length()
+	prettifyFiles(files, &fileList)
 	fmt.Println(fileList.Render())
 }
 
@@ -117,4 +105,39 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+type File struct {
+	Children map[string]*File
+	IsFolder bool
+	Name     string
+}
+
+func addFile(folder *File, file *File) {
+
+	_, isFileInChildren := folder.Children[file.Name]
+
+	if !isFileInChildren {
+		folder.Children[file.Name] = file
+	}
+}
+
+func prettifyFiles(folder *File, list *list.Writer) {
+	var keys []string
+	for k, _ := range folder.Children {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, fileName := range keys {
+		file := folder.Children[fileName]
+		(*list).AppendItem(fileName)
+		if file.IsFolder {
+			(*list).Indent()
+			prettifyFiles(file, list)
+			(*list).UnIndent()
+		}
+	}
+
 }
