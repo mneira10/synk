@@ -44,7 +44,7 @@ func GetConfiguration(path string) R2ConfigData {
 
 	err := viper.Unmarshal(&config)
 	if err != nil {
-		log.Fatal("unable to decode into struct, %v", err)
+		log.WithFields(log.Fields{"unmarshal_error": err}).Fatal("unable to decode into struct")
 		os.Exit(1)
 	}
 
