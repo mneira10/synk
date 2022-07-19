@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/mneira10/synk/internal"
 	"github.com/mneira10/synk/s3Storage"
@@ -31,44 +30,15 @@ to quickly create a Cobra application.`,
 
 		fmt.Println("Calculating differences...")
 
-		localFiles := internal.GetFilesInLocalPath(cfgFilePath)
-		bucketFiles := getFilesInBucket(s3Client)
+		localFiles := internal.GetFilePathsInLocalPath(cfgFilePath)
+		bucketFiles := internal.GetFilePathsInBucket(s3Client)
 
-		diffFiles := getDiffFiles(&localFiles, &bucketFiles)
+		diffFiles := internal.GetDiffFilePaths(&localFiles, &bucketFiles)
 
-		fmt.Println("Diff:")
-		for _, file := range diffFiles {
-			fmt.Println(file)
-		}
+		output := internal.PrettifyFilePaths(&diffFiles)
+		fmt.Println(output)
 
 	},
-}
-
-func getDiffFiles(localFiles *[]string, bucketFiles *[]string) []string {
-	var diffFiles []string
-	sort.Strings(*bucketFiles)
-
-	for _, localFile := range *localFiles {
-		// Binary search the sorted bucket files
-		i := sort.SearchStrings(*bucketFiles, localFile)
-		isLocalFileInBucket := i < len(*bucketFiles) && (*bucketFiles)[i] == localFile
-
-		if !isLocalFileInBucket {
-			diffFiles = append(diffFiles, localFile)
-		}
-	}
-	return diffFiles
-
-}
-
-func getFilesInBucket(s3Client s3Storage.S3Storage) []string {
-	var bucketFiles []string
-	listObjectsData := s3Client.ListObjects()
-	objects := listObjectsData.Contents
-	for _, object := range objects {
-		bucketFiles = append(bucketFiles, *object.Key)
-	}
-	return bucketFiles
 }
 
 func init() {

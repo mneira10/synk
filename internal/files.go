@@ -8,6 +8,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/list"
 	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/s3Storage"
 )
 
 const FILE_SEPARATOR = "/"
@@ -82,16 +83,16 @@ func prettifyFiles(folder *File, list *list.Writer) {
 
 }
 
-func GetFilesInLocalPath(path string) []string {
+func GetFilePathsInLocalPath(path string) []string {
 	var localFiles []string
-	err := filepath.Walk(path,
-		func(filePath string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(path,
+		func(filePath string, d os.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			// fmt.Println(path, info.Size())
-			if path != filePath && !strings.HasSuffix(filePath, CONFIG_FILE_NAME) {
-				localFiles = append(localFiles, filePath)
+			if path != filePath && !strings.HasSuffix(filePath, CONFIG_FILE_NAME) && !d.IsDir() {
+				relativeFilepath, _ := filepath.Rel(path, filePath)
+				localFiles = append(localFiles, relativeFilepath)
 			}
 			return nil
 		})
@@ -101,6 +102,33 @@ func GetFilesInLocalPath(path string) []string {
 	}
 
 	return localFiles
+}
+
+func GetFilePathsInBucket(s3Client s3Storage.S3Storage) []string {
+	var bucketFilePaths []string
+	listObjectsData := s3Client.ListObjects()
+	objects := listObjectsData.Contents
+	for _, object := range objects {
+		bucketFilePaths = append(bucketFilePaths, *object.Key)
+	}
+	return bucketFilePaths
+}
+
+func GetDiffFilePaths(localFiles *[]string, bucketFiles *[]string) []string {
+	var diffFiles []string
+	sort.Strings(*bucketFiles)
+
+	for _, localFile := range *localFiles {
+		// Binary search the sorted bucket files
+		i := sort.SearchStrings(*bucketFiles, localFile)
+		isLocalFileInBucket := i < len(*bucketFiles) && (*bucketFiles)[i] == localFile
+
+		if !isLocalFileInBucket {
+			diffFiles = append(diffFiles, localFile)
+		}
+	}
+	return diffFiles
+
 }
 
 func PrettifyFilePaths(filePaths *[]string) string {
@@ -116,7 +144,7 @@ func PrettifyFilePaths(filePaths *[]string) string {
 
 	for _, filePath := range *filePaths {
 
-		split := strings.Split(filePath, "/")
+		split := strings.Split(filePath, FILE_SEPARATOR)
 		parentFolder := files
 
 		for i, part := range split {

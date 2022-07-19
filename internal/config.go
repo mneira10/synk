@@ -6,23 +6,14 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/s3Storage"
 
 	"github.com/spf13/viper"
 )
 
 const CONFIG_FILE_NAME = ".synk.yaml"
 
-// Currently only supports Cloudflare's R2
-type R2ConfigData struct {
-	Type            string `validate:"required,oneof='R2'"`
-	BucketName      string `validate:"required"`
-	Url             string `validate:"required"`
-	AccountId       string `validate:"required"`
-	AccessKeyId     string `validate:"required"`
-	AccessKeySecret string `validate:"required"`
-}
-
-func GetConfiguration(path string) R2ConfigData {
+func GetConfiguration(path string) s3Storage.R2ConfigData {
 	log.WithFields(log.Fields{"configPath": path}).Info("Getting configuration...")
 	viper.SetConfigName(CONFIG_FILE_NAME)
 	viper.SetConfigType("yaml")
@@ -40,7 +31,7 @@ func GetConfiguration(path string) R2ConfigData {
 
 	log.Info("Unmarshalling data...")
 
-	var config R2ConfigData
+	var config s3Storage.R2ConfigData
 
 	err := viper.Unmarshal(&config)
 	if err != nil {

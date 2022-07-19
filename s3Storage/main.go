@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
 )
 
@@ -26,7 +25,7 @@ type S3Storage interface {
 }
 
 // TODO: generalize this configuration to any S3 source
-func ConfigS3(storageConfig *internal.R2ConfigData) *S3Object {
+func ConfigS3(storageConfig *R2ConfigData) *S3Object {
 	log.Info("Configuring S3...")
 
 	r2Resolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
