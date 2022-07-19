@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
 )
 
@@ -25,23 +26,22 @@ type S3Storage interface {
 }
 
 // TODO: generalize this configuration to any S3 source
-func ConfigS3() *S3Object {
+func ConfigS3(storageConfig *internal.R2ConfigData) *S3Object {
 	log.Info("Configuring S3...")
-
-	// temp hack while I implement a config file somewhere
-	accountId := os.Getenv("CLOUDFLARE_R2_ACCOUNT_ID")
-	accessKeyId := os.Getenv("CLOUDFLARE_R2_ACCESS_KEY")
-	accessKeySecret := os.Getenv("CLOUDFLARE_R2_SECRET_KEY")
 
 	r2Resolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 		return aws.Endpoint{
-			URL: fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId),
+			URL: fmt.Sprintf("https://%s.r2.cloudflarestorage.com", storageConfig.AccountId),
 		}, nil
 	})
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
 		config.WithEndpointResolverWithOptions(r2Resolver),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyId, accessKeySecret, "")),
+		config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				storageConfig.AccessKeyId,
+				storageConfig.AccessKeySecret,
+				"")),
 	)
 
 	if err != nil {
@@ -51,8 +51,8 @@ func ConfigS3() *S3Object {
 
 	s3Obj := S3Object{
 		client:     s3.NewFromConfig(cfg),
-		BucketName: "test-synk",
-		Url:        fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountId),
+		BucketName: storageConfig.BucketName,
+		Url:        fmt.Sprintf("https://%s.r2.cloudflarestorage.com", storageConfig.AccountId),
 	}
 
 	log.Info("Successfully configured s3.")
@@ -72,16 +72,11 @@ func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
 	})
 
 	if err != nil {
+		fmt.Printf("Could not list files in %v. Double check your configuration!\n", s3Obj.BucketName)
+		log.Error("Could not list files in bucket")
 		log.Fatal(err)
-		log.Fatal("Could not list files in bucket")
 		os.Exit(1)
 	}
 
 	return listObjectsOutput
-
-	// for _, object := range listObjectsOutput.Contents {
-	// 	// obj, _ := json.MarshalIndent(object, "", "\t")
-	// 	// fmt.Println(string(obj))
-	// 	fmt.Printf("Name: %v\n", *object.Key)
-	// }
 }

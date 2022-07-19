@@ -21,7 +21,7 @@ var testCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Debug("Running test command.")
 
-		config := internal.GetConfiguration(cfgFile)
+		config := internal.GetConfiguration(cfgFilePath)
 
 		fmt.Println(config.BucketName)
 

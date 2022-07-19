@@ -6,13 +6,10 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 
-	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/internal"
 	"github.com/mneira10/synk/s3Storage"
-
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -28,11 +25,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("diff called")
 
-		s3Client := s3Storage.ConfigS3()
-		// TODO: get this from global configuration
-		localFiles := getFilesInLocalPath("./testData")
+		config := internal.GetConfiguration(cfgFilePath)
+		s3Client := s3Storage.ConfigS3(&config)
+
+		fmt.Println("Calculating differences...")
+
+		localFiles := internal.GetFilesInLocalPath(cfgFilePath)
 		bucketFiles := getFilesInBucket(s3Client)
 
 		diffFiles := getDiffFiles(&localFiles, &bucketFiles)
@@ -70,27 +69,6 @@ func getFilesInBucket(s3Client s3Storage.S3Storage) []string {
 		bucketFiles = append(bucketFiles, *object.Key)
 	}
 	return bucketFiles
-}
-
-func getFilesInLocalPath(path string) []string {
-	var localFiles []string
-	err := filepath.Walk(path,
-		func(filePath string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			// fmt.Println(path, info.Size())
-			if path != filePath {
-				localFiles = append(localFiles, filePath)
-			}
-			return nil
-		})
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-
-	return localFiles
 }
 
 func init() {

@@ -12,7 +12,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var (
-	cfgFile string
+	cfgFilePath string
 
 	rootCmd = &cobra.Command{
 
@@ -45,7 +45,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", ".", "config file (default is current dir)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFilePath, "config", "c", ".", "config file (default is current dir)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

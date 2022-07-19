@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
 	"github.com/mneira10/synk/s3Storage"
 	"github.com/spf13/cobra"
@@ -19,8 +20,10 @@ var listCmd = &cobra.Command{
 	Short: "List all files in the s3 compatible storage",
 	Long:  `This will list all of the existing files in the bucket specified in the configuration.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info("Listing files in bucket:")
-		s3Client := s3Storage.ConfigS3()
+		log.Info("Listing files in bucket")
+
+		config := internal.GetConfiguration(cfgFilePath)
+		s3Client := s3Storage.ConfigS3(&config)
 
 		fmt.Println("Bucket:", s3Client.BucketName)
 		fmt.Println("Url:", s3Client.Url)
@@ -35,6 +38,10 @@ func printBucketFiles(s3Client s3Storage.S3Storage) {
 	objects := listObjectsData.Contents
 
 	sort.Sort(s3Storage.ByFileName(objects))
+
+	if len(objects) == 0 {
+		fmt.Println("No files in this bucket yet!")
+	}
 
 	for _, object := range objects {
 		fmt.Printf("%v\n", *object.Key)

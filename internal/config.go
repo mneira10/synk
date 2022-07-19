@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const CONFIG_FILE_NAME = ".synk.yaml"
+
 // Currently only supports Cloudflare's R2
 type R2ConfigData struct {
 	Type            string `validate:"required,oneof='R2'"`
@@ -22,7 +24,7 @@ type R2ConfigData struct {
 
 func GetConfiguration(path string) R2ConfigData {
 	log.WithFields(log.Fields{"configPath": path}).Info("Getting configuration...")
-	viper.SetConfigName(".synk.yaml")
+	viper.SetConfigName(CONFIG_FILE_NAME)
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
 
