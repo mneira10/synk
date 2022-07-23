@@ -15,6 +15,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type uploadData struct {
+	localFilePath               string
+	filePathRelativeToCfgFolder string
+}
+
+type resultData struct {
+	uploadData uploadData
+	err        error
+}
+
+const NUM_CONCURRENT_UPLOADS = 10
+
 // pushCmd represents the push command
 var pushCmd = &cobra.Command{
 	Use:   "push",
@@ -47,15 +59,66 @@ to quickly create a Cobra application.`,
 
 		fmt.Println("Uploading files...")
 
-		for _, filePathRelativeToCfgFolder := range diffFiles {
-			localFilePath := filepath.Join(cfgFilePath, filePathRelativeToCfgFolder)
-			fmt.Println("STARTING", localFilePath)
-			s3Client.UploadFile(localFilePath, filePathRelativeToCfgFolder)
-			fmt.Println("UPLOADED", localFilePath)
+		numFilesToUpload := len(diffFiles)
+		filesToUpload := make(chan uploadData, numFilesToUpload)
+		results := make(chan resultData, numFilesToUpload)
+
+		for i := 0; i < NUM_CONCURRENT_UPLOADS; i++ {
+			go startUploadWorker(filesToUpload, results, s3Client)
 		}
 
-		fmt.Println("Files uploaded.")
+		for _, filePathRelativeToCfgFolder := range diffFiles {
+			localFilePath := filepath.Join(cfgFilePath, filePathRelativeToCfgFolder)
+
+			uploadData := uploadData{localFilePath: localFilePath, filePathRelativeToCfgFolder: filePathRelativeToCfgFolder}
+			filesToUpload <- uploadData
+		}
+
+		close(filesToUpload)
+
+		var uploadErrorFiles []string
+
+		for i := 0; i < numFilesToUpload; i++ {
+			uploadResult := <-results
+			if uploadResult.err != nil {
+				uploadErrorFiles = append(
+					uploadErrorFiles,
+					uploadResult.uploadData.filePathRelativeToCfgFolder,
+				)
+
+				log.WithFields(log.Fields{
+					"error": uploadResult.err,
+					"file":  uploadResult.uploadData.localFilePath,
+				}).Error("Could not upload file")
+			}
+		}
+
+		if len(uploadErrorFiles) != 0 {
+			errorFilesOutput := internal.PrettifyFilePaths(&uploadErrorFiles)
+			fmt.Println("Could not upload some files:")
+			fmt.Println(errorFilesOutput)
+			os.Exit(1)
+		} else {
+			fmt.Println("Files uploaded successfully.")
+		}
+
 	},
+}
+
+func startUploadWorker(filesToUpload <-chan uploadData, results chan<- resultData, s3Client *s3Storage.S3Object) {
+	for dataToUpload := range filesToUpload {
+		fmt.Println("STARTING", dataToUpload.filePathRelativeToCfgFolder)
+		err := s3Client.UploadFile(dataToUpload.localFilePath, dataToUpload.filePathRelativeToCfgFolder)
+		fmt.Println("UPLOADED", dataToUpload.localFilePath)
+
+		resultsData := resultData{uploadData: dataToUpload}
+
+		if err != nil {
+			resultsData.err = err
+		}
+		results <- resultsData
+	}
+
 }
 
 func getUserConsent() bool {
