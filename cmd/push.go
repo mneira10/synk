@@ -25,6 +25,7 @@ type resultData struct {
 	err        error
 }
 
+// TODO: set a way to override this with a flag or something
 const NUM_CONCURRENT_UPLOADS = 10
 
 // pushCmd represents the push command

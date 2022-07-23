@@ -25,6 +25,7 @@ type S3Object struct {
 type S3Storage interface {
 	ListObjects() *s3.ListObjectsV2Output
 	UploadFile(localFilePath string, bucketPath string) error
+	DeleteFile(bucketFilePath string) error
 	// DownloadFile(bucketPath string)
 }
 
@@ -114,5 +115,16 @@ func (s3Obj *S3Object) UploadFile(localFilePath string, bucketPath string) error
 	}
 
 	_, err = s3Obj.client.PutObject(context.TODO(), objectData)
+	return err
+}
+
+func (s3Obj *S3Object) DeleteFile(bucketFilePath string) error {
+
+	deleteObjData := &s3.DeleteObjectInput{
+		Bucket: &s3Obj.BucketName,
+		Key:    &bucketFilePath,
+	}
+
+	_, err := s3Obj.client.DeleteObject(context.TODO(), deleteObjData)
 	return err
 }
