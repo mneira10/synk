@@ -5,10 +5,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/s3Storage"
 
 	"github.com/spf13/cobra"
 )
@@ -22,11 +21,10 @@ var testCmd = &cobra.Command{
 		log.Debug("Running test command.")
 
 		config := internal.GetConfiguration(cfgFilePath)
+		s3Client := s3Storage.ConfigS3(&config)
 
-		fmt.Println(config.BucketName)
+		s3Client.UploadFile("/Users/mauro/Documents/ikigai/synk/realMockData/newFileThatShouldAppear.txt", "newFolder/newFileThatShouldAppear.txt")
 
-		// s3Client := s3Storage.ConfigS3()
-		// s3Client.ListFiles()
 	},
 }
 

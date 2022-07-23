@@ -6,7 +6,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/mneira10/synk/internal"
+	log "github.com/mneira10/synk/logger"
+	"github.com/mneira10/synk/s3Storage"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +26,51 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("push called")
+		log.Debug("Starting push...")
+
+		config := internal.GetConfiguration(cfgFilePath)
+		s3Client := s3Storage.ConfigS3(&config)
+
+		localFiles := internal.GetFilePathsInLocalPath(cfgFilePath)
+		bucketFiles := internal.GetFilePathsInBucket(s3Client)
+
+		diffFiles := internal.GetDiffFilePaths(&localFiles, &bucketFiles)
+
+		fmt.Println("These are the files that will be uploaded:")
+		diffFileOutput := internal.PrettifyFilePaths(&diffFiles)
+		fmt.Println(diffFileOutput)
+
+		didUserConsent := getUserConsent()
+		if !didUserConsent {
+			os.Exit(1)
+		}
+
+		fmt.Println("Uploading files...")
+
+		for _, filePathRelativeToCfgFolder := range diffFiles {
+			localFilePath := filepath.Join(cfgFilePath, filePathRelativeToCfgFolder)
+			fmt.Println("STARTING", localFilePath)
+			s3Client.UploadFile(localFilePath, filePathRelativeToCfgFolder)
+			fmt.Println("UPLOADED", localFilePath)
+		}
+
+		fmt.Println("Files uploaded.")
 	},
+}
+
+func getUserConsent() bool {
+	var userAnswer string
+	fmt.Println("Do you wish to proceed? yes/no")
+	fmt.Scanln(&userAnswer)
+
+	if userAnswer != "yes" && userAnswer != "no" {
+		fmt.Println("Please type 'yes' or 'no'")
+		return getUserConsent()
+	} else if userAnswer == "no" {
+		fmt.Println("Did not upload files")
+		return false
+	}
+	return true
 }
 
 func init() {

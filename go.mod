@@ -23,6 +23,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.3.5 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
@@ -45,6 +46,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.44.58
 	github.com/aws/aws-sdk-go-v2 v1.16.5 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.15.11
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.11

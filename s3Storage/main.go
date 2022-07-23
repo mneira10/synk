@@ -1,26 +1,30 @@
 package s3Storage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	log "github.com/mneira10/synk/logger"
 )
 
 type S3Object struct {
 	client     *s3.Client
+	config     aws.Config
 	BucketName string
 	Url        string
 }
 
 type S3Storage interface {
 	ListObjects() *s3.ListObjectsV2Output
-	// UploadFile(bucketPath string)
+	UploadFile(localFilePath string, bucketPath string) error
 	// DownloadFile(bucketPath string)
 }
 
@@ -50,6 +54,7 @@ func ConfigS3(storageConfig *R2ConfigData) *S3Object {
 
 	s3Obj := S3Object{
 		client:     s3.NewFromConfig(cfg),
+		config:     cfg,
 		BucketName: storageConfig.BucketName,
 		Url:        fmt.Sprintf("https://%s.r2.cloudflarestorage.com", storageConfig.AccountId),
 	}
@@ -78,4 +83,36 @@ func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
 	}
 
 	return listObjectsOutput
+}
+
+func (s3Obj *S3Object) UploadFile(localFilePath string, bucketPath string) error {
+
+	upFile, err := os.Open(localFilePath)
+
+	if err != nil {
+		return fmt.Errorf("could not open local filepath [%v]: %+v", localFilePath, err)
+	}
+
+	defer upFile.Close()
+
+	// Get the file info
+	upFileInfo, _ := upFile.Stat()
+	var fileSize int64 = upFileInfo.Size()
+	fileBuffer := make([]byte, fileSize)
+	upFile.Read(fileBuffer)
+
+	objectData := &s3.PutObjectInput{
+		Bucket:        aws.String(s3Obj.BucketName),
+		Key:           aws.String(bucketPath),
+		Body:          bytes.NewReader(fileBuffer),
+		ContentLength: fileSize,
+		ContentType:   aws.String(http.DetectContentType(fileBuffer)),
+		// TODO: look into this
+		// ACL:                  "private",
+		// ContentDisposition:   aws.String("attachment"),
+		// ServerSideEncryption: "AES256",
+	}
+
+	_, err = s3Obj.client.PutObject(context.TODO(), objectData)
+	return err
 }
