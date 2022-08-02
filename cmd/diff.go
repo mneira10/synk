@@ -34,6 +34,17 @@ to quickly create a Cobra application.`,
 		bucketFiles := internal.GetFilePathsInBucket(s3Client)
 
 		diffFiles := internal.GetDiffFilePaths(&localFiles, &bucketFiles)
+		numberOnly, _ := cmd.Flags().GetBool("numberOnly")
+
+		if len(diffFiles) == 0 {
+			fmt.Println("Everything is up to date!")
+			return
+		}
+
+		if numberOnly {
+			fmt.Println(len(diffFiles))
+			return
+		}
 
 		output := internal.PrettifyFilePaths(&diffFiles)
 		fmt.Println(output)
@@ -52,5 +63,6 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// diffCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	diffCmd.Flags().BoolP("numberOnly", "n", false, "Only display the number of different files")
+
 }

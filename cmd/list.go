@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/mneira10/synk/internal"
 	log "github.com/mneira10/synk/logger"
 	"github.com/mneira10/synk/s3Storage"
@@ -27,13 +28,21 @@ var listCmd = &cobra.Command{
 		fmt.Println("Bucket:", s3Client.BucketName)
 		fmt.Println("Url:", s3Client.Url)
 
-		formatAndPrintObjects(s3Client)
+		objects := s3Client.ListObjects()
+
+		numberOnly, _ := cmd.Flags().GetBool("numberOnly")
+
+		if numberOnly {
+			fmt.Println(len(objects), "in", s3Client.BucketName)
+			return
+		}
+
+		formatAndPrintObjects(objects)
 
 	},
 }
 
-func formatAndPrintObjects(s3Client s3Storage.S3Storage) {
-	objects := s3Client.ListObjects()
+func formatAndPrintObjects(objects []s3Types.Object) {
 
 	if len(objects) == 0 {
 		fmt.Println("No files in this bucket yet!")
@@ -62,5 +71,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// listCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	listCmd.Flags().BoolP("numberOnly", "n", false, "Only display the number of files in the bucket")
 }
