@@ -69,9 +69,6 @@ func (s3Obj *S3Object) ListObjects() []types.Object {
 
 	log.WithFields(log.Fields{"bucketName": s3Obj.BucketName}).Info("Listing objects")
 
-	// This should work for up to 1k objects:
-	// https://docs.aws.amazon.com/sdk-for-go/api/service/s3/#S3.ListObjectsV2
-	// TODO: get all objects here
 	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
 		Bucket:  &s3Obj.BucketName,
 		MaxKeys: 1000,
@@ -86,11 +83,8 @@ func (s3Obj *S3Object) ListObjects() []types.Object {
 
 	allContents := listObjectsOutput.Contents
 
-	isTruncated := listObjectsOutput.IsTruncated
-	startAfter := listObjectsOutput.StartAfter
-
-	for isTruncated {
-		newListObjectsOutput, err := listObjects(&s3Obj.BucketName, startAfter, s3Obj)
+	for listObjectsOutput.IsTruncated {
+		listObjectsOutput, err = listObjects(listObjectsOutput, s3Obj)
 
 		if err != nil {
 			fmt.Printf("Could not list files in %v. Double check your configuration!\n", s3Obj.BucketName)
@@ -99,21 +93,19 @@ func (s3Obj *S3Object) ListObjects() []types.Object {
 			os.Exit(1)
 		}
 
-		allContents = append(allContents, newListObjectsOutput.Contents...)
-
-		isTruncated = newListObjectsOutput.IsTruncated
-		startAfter = newListObjectsOutput.StartAfter
+		allContents = append(allContents, listObjectsOutput.Contents...)
 
 	}
 
 	return allContents
 }
 
-func listObjects(bucketName *string, startAfter *string, s3Obj *S3Object) (*s3.ListObjectsV2Output, error) {
-	log.WithFields(log.Fields{"startAfter": startAfter}).Info("Listing again after")
+func listObjects(listOutput *s3.ListObjectsV2Output, s3Obj *S3Object) (*s3.ListObjectsV2Output, error) {
+	log.WithFields(log.Fields{"nextContinuationToken": listOutput.NextContinuationToken}).Info("Listing again")
 	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
-		Bucket:  bucketName,
-		MaxKeys: 1000,
+		Bucket:            listOutput.Name,
+		MaxKeys:           1000,
+		ContinuationToken: listOutput.NextContinuationToken,
 	})
 
 	if err != nil {
