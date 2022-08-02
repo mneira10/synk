@@ -27,7 +27,7 @@ const ASCII_NUKE = `
             | ;  :|
    _____.,-#%&$@%#&#~,._____`
 
-const NUM_CONCURRENT_DELETES = 10
+const NUM_CONCURRENT_DELETES = 20
 
 type nukeData struct {
 	bucketFilePath string
