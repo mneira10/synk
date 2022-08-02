@@ -33,8 +33,7 @@ var listCmd = &cobra.Command{
 }
 
 func formatAndPrintObjects(s3Client s3Storage.S3Storage) {
-	listObjectsData := s3Client.ListObjects()
-	objects := listObjectsData.Contents
+	objects := s3Client.ListObjects()
 
 	if len(objects) == 0 {
 		fmt.Println("No files in this bucket yet!")

@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	log "github.com/mneira10/synk/logger"
 )
@@ -23,7 +24,7 @@ type S3Object struct {
 }
 
 type S3Storage interface {
-	ListObjects() *s3.ListObjectsV2Output
+	ListObjects() []types.Object
 	UploadFile(localFilePath string, bucketPath string) error
 	DeleteFile(bucketFilePath string) error
 	// DownloadFile(bucketPath string)
@@ -64,7 +65,7 @@ func ConfigS3(storageConfig *R2ConfigData) *S3Object {
 	return &s3Obj
 }
 
-func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
+func (s3Obj *S3Object) ListObjects() []types.Object {
 
 	log.WithFields(log.Fields{"bucketName": s3Obj.BucketName}).Info("Listing objects")
 
@@ -83,7 +84,46 @@ func (s3Obj *S3Object) ListObjects() *s3.ListObjectsV2Output {
 		os.Exit(1)
 	}
 
-	return listObjectsOutput
+	allContents := listObjectsOutput.Contents
+
+	isTruncated := listObjectsOutput.IsTruncated
+	startAfter := listObjectsOutput.StartAfter
+
+	for isTruncated {
+		newListObjectsOutput, err := listObjects(&s3Obj.BucketName, startAfter, s3Obj)
+
+		if err != nil {
+			fmt.Printf("Could not list files in %v. Double check your configuration!\n", s3Obj.BucketName)
+			log.Error("Could not list files in bucket")
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
+		allContents = append(allContents, newListObjectsOutput.Contents...)
+
+		isTruncated = newListObjectsOutput.IsTruncated
+		startAfter = newListObjectsOutput.StartAfter
+
+	}
+
+	return allContents
+}
+
+func listObjects(bucketName *string, startAfter *string, s3Obj *S3Object) (*s3.ListObjectsV2Output, error) {
+	log.WithFields(log.Fields{"startAfter": startAfter}).Info("Listing again after")
+	listObjectsOutput, err := s3Obj.client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
+		Bucket:  bucketName,
+		MaxKeys: 1000,
+	})
+
+	if err != nil {
+		fmt.Printf("Could not list files in %v. Double check your configuration!\n", s3Obj.BucketName)
+		log.Error("Could not list files in bucket")
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	return listObjectsOutput, err
 }
 
 func (s3Obj *S3Object) UploadFile(localFilePath string, bucketPath string) error {

@@ -106,8 +106,7 @@ func GetFilePathsInLocalPath(path string) []string {
 
 func GetFilePathsInBucket(s3Client s3Storage.S3Storage) []string {
 	var bucketFilePaths []string
-	listObjectsData := s3Client.ListObjects()
-	objects := listObjectsData.Contents
+	objects := s3Client.ListObjects()
 	for _, object := range objects {
 		bucketFilePaths = append(bucketFilePaths, *object.Key)
 	}
