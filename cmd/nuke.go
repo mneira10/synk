@@ -13,6 +13,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const ASCII_NUKE string = `
+      _.-^^---....,,--_
+   _--                  --_
+  <                        >)
+  |                         |
+   \._                   _./
+      '''--. . , ; .--'''
+            | |   |
+         .-=||  | |=-.
+         '-=#$%&%$#=-'
+            | ;  :|
+   _____.,-#%&$@%#&#~,._____`
+
 // nukeCmd represents the nuke command
 var nukeCmd = &cobra.Command{
 	Use:   "nuke",
@@ -39,12 +52,13 @@ and usage of using your command.`,
 		bucketFiles := internal.GetFilePathsInBucket(s3Client)
 
 		for _, bucketFile := range bucketFiles {
-			fmt.Println("STARTING", bucketFile)
+			fmt.Println("DELETING", bucketFile)
 			s3Client.DeleteFile(bucketFile)
 			fmt.Println("DELETED", bucketFile)
 		}
 
-		fmt.Println("Nuked", config.BucketName)
+		fmt.Println("Nuked everything in", config.BucketName)
+		fmt.Println(ASCII_NUKE)
 	},
 }
 
